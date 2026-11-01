@@ -1,0 +1,869 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoomFinder - Makerere Off-Campus Accommodation</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        makGreen: '#006837',
+                        makGreenDark: '#004d28',
+                        makAmber: '#f59e0b',
+                        makSlate: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-makGreen text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('search')">
+                <div class="bg-white text-makGreen p-2 rounded-lg font-bold flex items-center justify-center shadow-inner">
+                    <i data-lucide="home" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight leading-none">RoomFinder</h1>
+                    <span class="text-xs text-emerald-200 font-medium">Makerere Housing Portal</span>
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex items-center space-x-1 sm:space-x-2 bg-makGreenDark/60 p-1 rounded-xl border border-emerald-600/40">
+                <button id="btn-tab-search" onclick="switchTab('search')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-white text-makGreen shadow-sm flex items-center gap-1.5">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Find Hostels</span>
+                </button>
+                <button id="btn-tab-roommates" onclick="switchTab('roommates')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-emerald-100 hover:text-white hover:bg-emerald-800/50 flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Roommate Match</span>
+                </button>
+                <button id="btn-tab-custodian" onclick="switchTab('custodian')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-amber-200 hover:bg-amber-500/20 flex items-center gap-1.5">
+                    <i data-lucide="message-square" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>Custodian Bot</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- ================= SECTION 1: SEARCH & HOSTEL LISTINGS ================= -->
+        <section id="section-search" class="space-y-6">
+            
+            <!-- Hero & Search Header -->
+            <div class="bg-gradient-to-r from-makSlate to-slate-800 rounded-2xl p-5 sm:p-7 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                    <i data-lucide="building-2" class="w-72 h-72"></i>
+                </div>
+                <div class="relative z-10 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-emerald-300 text-xs font-medium mb-3">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> 100% Scam-Proof Verified Escrow Booking
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Find Safe, Accredited Hostels Around Makerere</h2>
+                    <p class="text-slate-300 text-sm mt-1.5">Direct contact with verified custodians in Kikoni, Wandegeya, and Makerere Hill. No middleman broker fees.</p>
+
+                    <!-- Search Input & Quick Filter Bar -->
+                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        <div class="sm:col-span-8 relative">
+                            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400"></i>
+                            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search by hostel name (e.g. Olympia, Nana, Douglas)..." 
+                                class="w-full pl-11 pr-4 py-3 bg-white text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-makGreen shadow-sm text-sm placeholder-slate-400">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <select id="gateSelect" onchange="applyFilters()" class="w-full py-3 px-3.5 bg-white text-slate-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-makGreen shadow-sm text-sm font-medium border-r-8 border-transparent cursor-pointer">
+                                <option value="ALL">All Campus Gates</option>
+                                <option value="Kikoni Gate">Kikoni Gate</option>
+                                <option value="Wandegeya Gate">Wandegeya Gate</option>
+                                <option value="Makerere Hill Road Gate">Makerere Hill Road Gate</option>
+                                <option value="Western Gate">Western Gate (CoCIS/Law)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Filters Toolbar -->
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+                    <span class="font-semibold text-slate-500 uppercase tracking-wider text-[11px] flex items-center gap-1">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i> Filters:
+                    </span>
+                    
+                    <!-- Room Type Filter -->
+                    <select id="roomTypeSelect" onchange="applyFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1.5 px-3 rounded-lg border-0 focus:ring-2 focus:ring-makGreen cursor-pointer text-xs sm:text-sm">
+                        <option value="ALL">All Room Types</option>
+                        <option value="Single">Single Room</option>
+                        <option value="Double/Shared">Double / Shared</option>
+                        <option value="Self-Contained">Self-Contained</option>
+                    </select>
+
+                    <!-- Max Price Filter -->
+                    <select id="priceSelect" onchange="applyFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1.5 px-3 rounded-lg border-0 focus:ring-2 focus:ring-makGreen cursor-pointer text-xs sm:text-sm">
+                        <option value="ALL">Any Budget / Semester</option>
+                        <option value="500000">Under UGX 500,000</option>
+                        <option value="750000">Under UGX 750,000</option>
+                        <option value="1000000">Under UGX 1,000,000</option>
+                    </select>
+
+                    <!-- Distance Filter -->
+                    <select id="distanceSelect" onchange="applyFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1.5 px-3 rounded-lg border-0 focus:ring-2 focus:ring-makGreen cursor-pointer text-xs sm:text-sm">
+                        <option value="ALL">Any Distance</option>
+                        <option value="300">Within 300m of Gate</option>
+                        <option value="600">Within 600m of Gate</option>
+                        <option value="1000">Within 1km of Gate</option>
+                    </select>
+
+                    <!-- Dean Accreditation Toggle -->
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg text-xs font-semibold border border-emerald-200/60 transition">
+                        <input type="checkbox" id="deanAccreditedCheck" onchange="applyFilters()" class="rounded text-makGreen focus:ring-makGreen w-3.5 h-3.5">
+                        <span>Dean-Accredited Only</span>
+                    </label>
+                </div>
+
+                <div id="resultsCount" class="text-xs font-medium text-slate-500">
+                    Showing 5 Hostels
+                </div>
+            </div>
+
+            <!-- Hostel Listings Grid -->
+            <div id="hostelGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Content Populated by JavaScript -->
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 2: ROOMMATE MATCHING ================= -->
+        <section id="section-roommates" class="space-y-6 hidden">
+            <div class="bg-gradient-to-r from-emerald-800 to-makGreen rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold flex items-center gap-2">
+                            <i data-lucide="users" class="w-6 h-6"></i> Makerere Roommate Matcher
+                        </h2>
+                        <p class="text-emerald-100 text-sm mt-1">Split rent costs with compatible fellow Makerere students. Filter by course, year, and lifestyle habits.</p>
+                    </div>
+                    <button onclick="alert('Roommate profile creation flow initialized! Select a profile to message directly.')" class="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-semibold rounded-xl text-xs transition shadow">
+                        + Post Your Roommate Profile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Roommate Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="roommatesGrid">
+                <!-- Dynamic Content Populated by JS -->
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 3: CUSTODIAN WHATSAPP BOT SIMULATOR ================= -->
+        <section id="section-custodian" class="space-y-6 hidden">
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <div class="text-xs text-amber-800 leading-relaxed">
+                        <strong class="font-semibold">Week 2 Validation Insight:</strong> Hostel custodians in Kikoni & Wandegeya rejected complex web portals. RoomFinder solved this by letting custodians update live vacancy counts directly via this WhatsApp bot workflow.
+                    </div>
+                </div>
+
+                <!-- Simulated Smartphone UI -->
+                <div class="bg-slate-900 p-3 sm:p-4 rounded-[2.5rem] shadow-2xl border-4 border-slate-700 max-w-sm mx-auto">
+                    <!-- Phone Screen Header -->
+                    <div class="bg-emerald-800 text-white p-3 rounded-t-2xl flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-white text-emerald-800 font-bold flex items-center justify-center text-xs">
+                                RF
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs">RoomFinder Custodian Bot</h4>
+                                <span class="text-[10px] text-emerald-200 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Online (Official)
+                                </span>
+                            </div>
+                        </div>
+                        <i data-lucide="more-vertical" class="w-4 h-4 text-emerald-200"></i>
+                    </div>
+
+                    <!-- Chat Body -->
+                    <div id="chatBody" class="bg-[#efeae2] p-3 h-96 overflow-y-auto space-y-3 custom-scrollbar text-xs">
+                        <div class="bg-white p-2.5 rounded-lg shadow-sm max-w-[85%] border-l-4 border-emerald-600">
+                            <p class="font-bold text-slate-800">RoomFinder Bot 🤖</p>
+                            <p class="text-slate-600 mt-1">Hello Mr. Mukasa (Olympia Hostel - Kikoni Gate). Reply with your updated vacant room count for today:</p>
+                            <div class="mt-2 space-y-1 font-mono text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded">
+                                <p>Reply <strong>1</strong>: Single Rooms</p>
+                                <p>Reply <strong>2</strong>: Double Rooms</p>
+                                <p>Reply <strong>3</strong>: Fully Booked</p>
+                            </div>
+                            <span class="text-[9px] text-slate-400 block text-right mt-1">08:30 AM</span>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Actions -->
+                    <div class="bg-slate-100 p-2 rounded-b-2xl border-t border-slate-200 flex items-center gap-2">
+                        <input type="text" id="custodianInput" placeholder="Type 1, 2, or message..." class="flex-grow text-xs px-3 py-2 bg-white rounded-full border border-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+                        <button onclick="sendCustodianMessage()" class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center hover:bg-emerald-800 transition">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= DETAILED HOSTEL MODAL ================= -->
+    <div id="hostelModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 relative">
+            
+            <button onclick="closeModal('hostelModal')" class="absolute top-3 right-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full p-2 z-10 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div id="modalContent">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ESCROW BOOKING MODAL ================= -->
+    <div id="bookingModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 p-6 relative">
+            <button onclick="closeModal('bookingModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Step Indicator -->
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-makGreen text-white text-xs font-bold flex items-center justify-center">1</span>
+                    <span class="font-semibold text-xs text-slate-800">Escrow Commitment Booking</span>
+                </div>
+                <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-medium">Scam Protection Active</span>
+            </div>
+
+            <div id="bookingStep1">
+                <h3 class="font-bold text-slate-900 text-base" id="bookingHostelTitle">Reserve Room - Olympia Hostel</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Pay a refundable commitment deposit held safely in Escrow.</p>
+
+                <!-- Pricing Box -->
+                <div class="my-4 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 text-xs">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Required Deposit:</span>
+                        <span class="font-bold text-slate-800">UGX 50,000</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Platform Service Fee:</span>
+                        <span class="font-bold text-slate-800">UGX 3,000</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200 flex justify-between font-bold text-sm text-makGreen">
+                        <span>Total Payable Now:</span>
+                        <span>UGX 53,000</span>
+                    </div>
+                </div>
+
+                <!-- Refund Policy Guarantee Box -->
+                <div class="bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 mb-4 flex items-start gap-2.5">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-[11px] text-emerald-900 leading-tight">
+                        <strong>Guarantee:</strong> Your deposit is held in escrow. If the room does not match the verified description upon physical viewing, 100% of your deposit is refunded immediately.
+                    </p>
+                </div>
+
+                <!-- Mobile Money Selection Form -->
+                <form onsubmit="processEscrowPayment(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Select Mobile Money Network</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="border-2 border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer hover:border-amber-400 transition bg-white has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50">
+                                <input type="radio" name="network" value="MTN" checked class="text-amber-500 focus:ring-amber-400">
+                                <span class="text-xs font-bold text-slate-800">MTN MoMo</span>
+                            </label>
+                            <label class="border-2 border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer hover:border-red-400 transition bg-white has-[:checked]:border-red-500 has-[:checked]:bg-red-50/50">
+                                <input type="radio" name="network" value="AIRTEL" class="text-red-500 focus:ring-red-400">
+                                <span class="text-xs font-bold text-slate-800">Airtel Money</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Ugandan Phone Number</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs font-semibold text-slate-400">+256</span>
+                            <input type="tel" id="phoneInput" required placeholder="771 234 567" pattern="[0-9\s]{9,10}" class="w-full pl-12 pr-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-makGreen focus:outline-none">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-makGreen hover:bg-makGreenDark text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="lock" class="w-4 h-4"></i> Authorize Escrow Deposit
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: Payment Receipt / Booking Pass (Initially Hidden) -->
+            <div id="bookingStep2" class="hidden text-center space-y-4 py-2">
+                <div class="w-12 h-12 bg-emerald-100 text-makGreen rounded-full flex items-center justify-center mx-auto shadow-inner">
+                    <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-lg">Room Deposit Secured!</h3>
+                    <p class="text-xs text-slate-500 mt-1">Escrow confirmation code generated. Present this pass to the custodian upon arrival.</p>
+                </div>
+
+                <!-- Digital Booking Receipt Pass -->
+                <div class="bg-gradient-to-b from-slate-900 to-slate-800 text-white rounded-2xl p-4 text-left shadow-lg border border-slate-700 relative overflow-hidden">
+                    <div class="flex justify-between items-start border-b border-slate-700 pb-2 mb-2">
+                        <div>
+                            <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">OFFICIAL ESCROW PASS</span>
+                            <h4 class="font-bold text-sm" id="passHostelName">Olympia Hostel</h4>
+                        </div>
+                        <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-2 py-0.5 rounded font-mono">VERIFIED</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-[11px] py-1">
+                        <div>
+                            <span class="text-slate-400 block text-[9px]">DEPOSIT PAID</span>
+                            <span class="font-mono font-bold text-amber-300">UGX 50,000</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[9px]">ESCROW CODE</span>
+                            <span class="font-mono font-bold text-white" id="passCode">RF-8921-MAK</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[9px]">ROOM STATUS</span>
+                            <span class="text-emerald-300 font-semibold">Reserved for 48 hrs</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[9px]">CUSTODIAN</span>
+                            <span class="text-slate-200" id="passCustodian">Mr. Mukasa</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400">
+                        <span class="flex items-center gap-1"><i data-lucide="shield" class="w-3 h-3 text-emerald-400"></i> Dean-Accredited</span>
+                        <span>Stamp: <script>document.write(new Date().toLocaleDateString());</script></span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="closeModal('bookingModal')" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+                        Done / Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 mt-12 text-xs">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+                <p class="font-semibold text-slate-200">IST2106 Technopreneurship Capstone Project - Group 3</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">RoomFinder: Verified Off-Campus Housing for Makerere University Students.</p>
+            </div>
+            <div class="flex items-center gap-4 text-[11px]">
+                <span class="flex items-center gap-1 text-emerald-400"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Customer Discovery Validated</span>
+                <span>Week 2 Prototype</span>
+            </div>
+        </div>
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT SIMULATION LOGIC ================= -->
+    <script>
+        // Data Store: Hostels
+        const hostelsData = [
+            {
+                id: 'h1',
+                name: 'Olympia Hostel',
+                gate: 'Kikoni Gate',
+                distance: 250, // in meters
+                priceSingle: 850000,
+                priceDouble: 500000, // per person
+                roomType: 'Self-Contained',
+                accredited: true,
+                verifiedLandlord: true,
+                vacancies: { single: 3, double: 5 },
+                custodian: 'Mr. Mukasa',
+                phone: '+256 772 123456',
+                img: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Free WiFi', '24/7 Guard & CCTV', 'Constant Water Tank', 'Shuttle Service to Main Campus', 'In-house Canteen']
+            },
+            {
+                id: 'h2',
+                name: 'Nana Hostel',
+                gate: 'Wandegeya Gate',
+                distance: 180,
+                priceSingle: 950000,
+                priceDouble: 550000,
+                roomType: 'Self-Contained',
+                accredited: true,
+                verifiedLandlord: true,
+                vacancies: { single: 1, double: 2 },
+                custodian: 'Ms. Nalubega',
+                phone: '+256 701 987654',
+                img: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=600&q=80',
+                amenities: ['High Speed Fiber WiFi', 'Balcony Views', 'Backup Generator', 'Biometric Security Gate']
+            },
+            {
+                id: 'h3',
+                name: 'Douglas Villa Hostel',
+                gate: 'Kikoni Gate',
+                distance: 400,
+                priceSingle: 700000,
+                priceDouble: 400000,
+                roomType: 'Single',
+                accredited: true,
+                verifiedLandlord: true,
+                vacancies: { single: 4, double: 6 },
+                custodian: 'Uncle Bob',
+                phone: '+256 774 555123',
+                img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Spacious Yard', 'Perimeter Wall', 'Quiet Study Lounge', 'Tiled Rooms']
+            },
+            {
+                id: 'h4',
+                name: 'Kann Hostel',
+                gate: 'Makerere Hill Road Gate',
+                distance: 550,
+                priceSingle: 650000,
+                priceDouble: 380000,
+                roomType: 'Double/Shared',
+                accredited: false,
+                verifiedLandlord: true,
+                vacancies: { single: 2, double: 8 },
+                custodian: 'Mrs. Katureebe',
+                phone: '+256 752 443322',
+                img: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=600&q=80',
+                amenities: ['DSTV Common Room', 'Water Heater', 'Security Guard']
+            },
+            {
+                id: 'h5',
+                name: 'Baskon Hostel',
+                gate: 'Western Gate',
+                distance: 320,
+                priceSingle: 600000,
+                priceDouble: 350000,
+                roomType: 'Single',
+                accredited: true,
+                verifiedLandlord: true,
+                vacancies: { single: 0, double: 4 },
+                custodian: 'Mr. Kato',
+                phone: '+256 782 112233',
+                img: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Near CoCIS Computer Labs', 'Water Tank Reserve', 'Self Cooking Area']
+            }
+        ];
+
+        // Data Store: Roommates
+        const roommatesData = [
+            {
+                name: 'Akello Sarah',
+                course: 'B. Business Administration (BBA)',
+                year: 'Year 1 (Fresher)',
+                budget: 'UGX 400,000 / sem',
+                prefGate: 'Kikoni Gate',
+                habits: 'Quiet studious, non-smoker, early sleeper',
+                gender: 'Female',
+                img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+            },
+            {
+                name: 'Kigozi David',
+                course: 'B.Sc Software Engineering',
+                year: 'Year 2',
+                budget: 'UGX 450,000 / sem',
+                prefGate: 'Western Gate (CoCIS)',
+                habits: 'Night owl, codes late, clean and organized',
+                gender: 'Male',
+                img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'
+            },
+            {
+                name: 'Mbabazi Joan',
+                course: 'Bachelor of Laws (LL.B)',
+                year: 'Year 1 (Fresher)',
+                budget: 'UGX 500,000 / sem',
+                prefGate: 'Wandegeya Gate',
+                habits: 'Enjoys group studies, tidy, friendly',
+                gender: 'Female',
+                img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80'
+            }
+        ];
+
+        // Active State Variables
+        let selectedHostelForBooking = null;
+
+        // Initialize UI on window load
+        window.onload = function() {
+            lucide.createIcons();
+            renderHostels(hostelsData);
+            renderRoommates();
+        };
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            document.getElementById('section-search').classList.add('hidden');
+            document.getElementById('section-roommates').classList.add('hidden');
+            document.getElementById('section-custodian').classList.add('hidden');
+
+            document.getElementById('btn-tab-search').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-emerald-100 hover:text-white hover:bg-emerald-800/50 flex items-center gap-1.5";
+            document.getElementById('btn-tab-roommates').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-emerald-100 hover:text-white hover:bg-emerald-800/50 flex items-center gap-1.5";
+            document.getElementById('btn-tab-custodian').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-amber-200 hover:bg-amber-500/20 flex items-center gap-1.5";
+
+            if (tabName === 'search') {
+                document.getElementById('section-search').classList.remove('hidden');
+                document.getElementById('btn-tab-search').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-white text-makGreen shadow-sm flex items-center gap-1.5";
+            } else if (tabName === 'roommates') {
+                document.getElementById('section-roommates').classList.remove('hidden');
+                document.getElementById('btn-tab-roommates').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-white text-makGreen shadow-sm flex items-center gap-1.5";
+            } else if (tabName === 'custodian') {
+                document.getElementById('section-custodian').classList.remove('hidden');
+                document.getElementById('btn-tab-custodian').className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-amber-400 text-slate-900 shadow-sm flex items-center gap-1.5";
+            }
+        }
+
+        // Render Hostel Cards
+        function renderHostels(items) {
+            const container = document.getElementById('hostelGrid');
+            document.getElementById('resultsCount').innerText = `Showing ${items.length} Hostel${items.length === 1 ? '' : 's'}`;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center bg-white rounded-2xl border border-slate-200">
+                        <i data-lucide="building-x" class="w-12 h-12 text-slate-400 mx-auto mb-2"></i>
+                        <h3 class="font-bold text-slate-700">No Hostels Match Your Search</h3>
+                        <p class="text-xs text-slate-500 mt-1">Try relaxing your gate distance or price filters.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = items.map(h => `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-200/80 transition-all duration-200 flex flex-col justify-between group">
+                    <div>
+                        <!-- Image Container with Badges -->
+                        <div class="relative h-44 overflow-hidden bg-slate-100">
+                            <img src="${h.img}" alt="${h.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent"></div>
+                            
+                            <!-- Badges -->
+                            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                                ${h.accredited ? `
+                                    <span class="bg-makGreen/95 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-sm flex items-center gap-1">
+                                        <i data-lucide="shield-check" class="w-3 h-3"></i> Dean-Accredited
+                                    </span>
+                                ` : ''}
+                                ${h.verifiedLandlord ? `
+                                    <span class="bg-slate-900/90 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                                        ✓ Verified Landlord
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end text-white">
+                                <div>
+                                    <span class="text-[11px] font-medium text-emerald-200 flex items-center gap-1">
+                                        <i data-lucide="map-pin" class="w-3 h-3"></i> ${h.gate} (${h.distance}m)
+                                    </span>
+                                    <h3 class="font-bold text-lg leading-tight text-white">${h.name}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-4 space-y-3">
+                            <!-- Pricing Row -->
+                            <div class="flex items-baseline justify-between border-b border-slate-100 pb-2.5">
+                                <div>
+                                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Single Room</span>
+                                    <span class="font-extrabold text-slate-900 text-sm">UGX ${h.priceSingle.toLocaleString()}</span>
+                                    <span class="text-[10px] text-slate-500">/sem</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Shared Room</span>
+                                    <span class="font-extrabold text-makGreen text-sm">UGX ${h.priceDouble.toLocaleString()}</span>
+                                    <span class="text-[10px] text-slate-500">/person</span>
+                                </div>
+                            </div>
+
+                            <!-- Realtime Vacancy Status -->
+                            <div class="bg-slate-50 p-2.5 rounded-xl flex items-center justify-between text-xs border border-slate-100">
+                                <span class="text-slate-600 font-medium">Real-time Vacancies:</span>
+                                <div class="flex gap-2">
+                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[11px]">
+                                        ${h.vacancies.single} Single
+                                    </span>
+                                    <span class="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded text-[11px]">
+                                        ${h.vacancies.double} Double
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons Footer -->
+                    <div class="p-4 pt-0 grid grid-cols-2 gap-2">
+                        <button onclick="openHostelDetails('${h.id}')" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i> Details
+                        </button>
+                        <button onclick="openBookingModal('${h.id}')" class="py-2.5 px-3 bg-makGreen hover:bg-makGreenDark text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1">
+                            <i data-lucide="lock" class="w-3.5 h-3.5"></i> Reserve
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Apply Search & Multiple Filters
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const gateVal = document.getElementById('gateSelect').value;
+            const typeVal = document.getElementById('roomTypeSelect').value;
+            const priceVal = document.getElementById('priceSelect').value;
+            const distVal = document.getElementById('distanceSelect').value;
+            const deanOnly = document.getElementById('deanAccreditedCheck').checked;
+
+            const filtered = hostelsData.filter(h => {
+                const matchesSearch = h.name.toLowerCase().includes(searchVal) || h.gate.toLowerCase().includes(searchVal);
+                const matchesGate = gateVal === 'ALL' || h.gate === gateVal;
+                const matchesType = typeVal === 'ALL' || h.roomType === typeVal || typeVal === 'ALL';
+                
+                let matchesPrice = true;
+                if (priceVal !== 'ALL') {
+                    const maxP = parseInt(priceVal);
+                    matchesPrice = h.priceSingle <= maxP || h.priceDouble <= maxP;
+                }
+
+                let matchesDist = true;
+                if (distVal !== 'ALL') {
+                    matchesDist = h.distance <= parseInt(distVal);
+                }
+
+                const matchesDean = !deanOnly || h.accredited === true;
+
+                return matchesSearch && matchesGate && matchesType && matchesPrice && matchesDist && matchesDean;
+            });
+
+            renderHostels(filtered);
+        }
+
+        // Detailed View Modal
+        function openHostelDetails(id) {
+            const h = hostelsData.find(item => item.id === id);
+            if (!h) return;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="relative h-60 bg-slate-800">
+                    <img src="${h.img}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                    <div class="absolute bottom-4 left-6 right-6 text-white">
+                        <div class="flex items-center gap-2 mb-1">
+                            ${h.accredited ? '<span class="bg-makGreen text-white text-[10px] font-bold px-2 py-0.5 rounded">Dean-Accredited</span>' : ''}
+                            <span class="bg-amber-400 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded">${h.gate}</span>
+                        </div>
+                        <h2 class="text-2xl font-extrabold">${h.name}</h2>
+                        <p class="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i> ${h.distance} meters from ${h.gate}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <!-- Pricing & Custodian Bar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div>
+                            <span class="text-xs text-slate-500 font-medium block">Room Pricing per Semester:</span>
+                            <p class="font-extrabold text-slate-900 text-sm mt-1">Single: <span class="text-makGreen">UGX ${h.priceSingle.toLocaleString()}</span></p>
+                            <p class="font-extrabold text-slate-900 text-sm">Shared (Double): <span class="text-makGreen">UGX ${h.priceDouble.toLocaleString()}</span> /person</p>
+                        </div>
+                        <div class="border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4">
+                            <span class="text-xs text-slate-500 font-medium block">Verified Custodian:</span>
+                            <p class="font-bold text-slate-800 text-sm mt-0.5">${h.custodian}</p>
+                            <p class="text-xs text-emerald-700 font-mono mt-0.5">${h.phone}</p>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2">Hostel Amenities & Security</h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                            ${h.amenities.map(a => `
+                                <div class="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-lg">
+                                    <i data-lucide="check" class="w-4 h-4 text-makGreen"></i> ${a}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-3 border-t border-slate-100 flex gap-3">
+                        <button onclick="simulateWhatsAppCall('${h.custodian}', '${h.phone}')" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                            <i data-lucide="phone-call" class="w-4 h-4"></i> Call Custodian Direct
+                        </button>
+                        <button onclick="closeModal('hostelModal'); openBookingModal('${h.id}')" class="flex-1 py-3 bg-makGreen hover:bg-makGreenDark text-white font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+                            <i data-lucide="lock" class="w-4 h-4"></i> Book via Escrow
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('hostelModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Open Escrow Booking Modal
+        function openBookingModal(id) {
+            selectedHostelForBooking = hostelsData.find(item => item.id === id);
+            if (!selectedHostelForBooking) return;
+
+            document.getElementById('bookingHostelTitle').innerText = `Reserve Room - ${selectedHostelForBooking.name}`;
+            document.getElementById('bookingStep1').classList.remove('hidden');
+            document.getElementById('bookingStep2').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Process Escrow Payment Simulation
+        function processEscrowPayment(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phoneInput').value;
+            const network = document.querySelector('input[name="network"]:checked').value;
+
+            if (!selectedHostelForBooking) return;
+
+            // Generate Pass Info
+            document.getElementById('passHostelName').innerText = selectedHostelForBooking.name;
+            document.getElementById('passCustodian').innerText = selectedHostelForBooking.custodian;
+            document.getElementById('passCode').innerText = `RF-${Math.floor(1000 + Math.random() * 9000)}-MAK`;
+
+            document.getElementById('bookingStep1').classList.add('hidden');
+            document.getElementById('bookingStep2').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Close Any Modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Render Roommate Profiles
+        function renderRoommates() {
+            const container = document.getElementById('roommatesGrid');
+            container.innerHTML = roommatesData.map(r => `
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <img src="${r.img}" class="w-12 h-12 rounded-full object-cover border-2 border-makGreen">
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm">${r.name}</h4>
+                                <span class="text-xs text-slate-500 font-medium">${r.course}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 space-y-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Year of Study:</span>
+                                <span class="font-semibold text-slate-800">${r.year}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Max Rent Budget:</span>
+                                <span class="font-semibold text-makGreen">${r.budget}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Preferred Location:</span>
+                                <span class="font-semibold text-slate-800">${r.prefGate}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Lifestyle Habits:</span>
+                            <p class="text-xs text-slate-700 italic bg-amber-50/60 p-2 rounded-lg border border-amber-200/50">"${r.habits}"</p>
+                        </div>
+                    </div>
+
+                    <button onclick="alert('Message sent to ${r.name}! They will receive your RoomFinder roommate request on WhatsApp.')" class="mt-4 w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition">
+                        Connect / Message Student
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // Custodian WhatsApp Bot Simulator
+        function sendCustodianMessage() {
+            const input = document.getElementById('custodianInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const chatBody = document.getElementById('chatBody');
+
+            // Append User Message
+            chatBody.innerHTML += `
+                <div class="bg-emerald-100 p-2.5 rounded-lg shadow-sm max-w-[80%] ml-auto text-slate-800 border-r-4 border-emerald-700">
+                    <p class="font-semibold text-[11px]">Custodian Mukasa</p>
+                    <p class="mt-0.5">${val}</p>
+                    <span class="text-[9px] text-slate-500 block text-right mt-0.5">Just now</span>
+                </div>
+            `;
+
+            input.value = '';
+
+            // Simulated Bot Auto Response
+            setTimeout(() => {
+                let botReply = "Thank you! Reply updated on the RoomFinder live student platform.";
+                if (val === '1') {
+                    botReply = "✅ Single Room Vacancy set to 3. Live student search portal updated instantly!";
+                    hostelsData[0].vacancies.single = 3;
+                } else if (val === '2') {
+                    botReply = "✅ Double Room Vacancy set to 5. Live student search portal updated instantly!";
+                    hostelsData[0].vacancies.double = 5;
+                } else if (val === '3') {
+                    botReply = "⚠️ Olympia Hostel marked as FULLY BOOKED for Semester 1.";
+                    hostelsData[0].vacancies.single = 0;
+                    hostelsData[0].vacancies.double = 0;
+                }
+
+                chatBody.innerHTML += `
+                    <div class="bg-white p-2.5 rounded-lg shadow-sm max-w-[85%] border-l-4 border-emerald-600">
+                        <p class="font-bold text-slate-800">RoomFinder Bot 🤖</p>
+                        <p class="text-slate-600 mt-1">${botReply}</p>
+                        <span class="text-[9px] text-slate-400 block text-right mt-1">Just now</span>
+                    </div>
+                `;
+                chatBody.scrollTop = chatBody.scrollHeight;
+                renderHostels(hostelsData);
+            }, 600);
+        }
+
+        function simulateWhatsAppCall(custodian, phone) {
+            alert(`Simulated Direct Call to Custodian: ${custodian} (${phone}). Connecting via phone gateway...`);
+        }
+    </script>
+</body>
+</html>
+```
